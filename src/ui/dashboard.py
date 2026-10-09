@@ -5,7 +5,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LLM CI/CD Regression & Red-Teaming Engine</title>
+  <title>Regress Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -117,41 +117,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.85rem;
-    }
-
-    .brand-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      background: var(--btn-highlight);
-      color: var(--btn-highlight-text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.35rem;
-      font-weight: 800;
-      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
-    }
-
-    [data-theme="dark"] .brand-icon {
-      background: #ffffff;
-      color: #050508;
-      box-shadow: 0 4px 16px rgba(250, 238, 217, 0.3);
+      gap: 0.5rem;
     }
 
     .brand-title {
       font-weight: 800;
-      font-size: 1.15rem;
-      letter-spacing: -0.02em;
-    }
-
-    .brand-subtitle {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-weight: 600;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
     }
 
     .nav-actions {
@@ -164,21 +136,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .theme-switch-container {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      padding: 0.35rem 0.75rem;
+      padding: 0.25rem 0.35rem;
       background: var(--topo-bg);
       border: 1px solid var(--border-color);
       border-radius: 9999px;
       cursor: pointer;
       user-select: none;
-    }
-
-    .theme-switch-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
     }
 
     .theme-toggle {
@@ -200,10 +163,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       top: 3px;
       left: 3px;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
     }
 
     [data-theme="dark"] .theme-toggle-knob {
@@ -475,18 +434,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   <header>
     <div class="brand">
-      <div class="brand-icon">⚡</div>
-      <div>
-        <div class="brand-title">LLM Regression & Red-Teaming Engine</div>
-        <div class="brand-subtitle">CI/CD Autonomous Gatekeeper</div>
-      </div>
+      <div class="brand-title">Regress Engine</div>
     </div>
     <div class="nav-actions">
       <!-- Theme Switcher -->
       <div class="theme-switch-container" onclick="toggleTheme()" title="Toggle Light / Dark Mode">
-        <span class="theme-switch-label" id="theme-text">Light</span>
         <div class="theme-toggle">
-          <div class="theme-toggle-knob" id="theme-knob">☀️</div>
+          <div class="theme-toggle-knob" id="theme-knob"></div>
         </div>
       </div>
 
@@ -505,19 +459,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="topo-grid">
       <div class="topo-item">
         <span class="topo-name">Task Broker</span>
-        <span class="topo-val">⚡ Upstash Redis (Live)</span>
+        <span class="topo-val">Upstash Redis (Live)</span>
       </div>
       <div class="topo-item">
         <span class="topo-name">Trace Harvester</span>
-        <span class="topo-val">🦜 LangSmith Traces</span>
+        <span class="topo-val">LangSmith Traces</span>
       </div>
       <div class="topo-item">
         <span class="topo-name">Storage</span>
-        <span class="topo-val">🗄️ Supabase Postgres</span>
+        <span class="topo-val">Supabase Postgres</span>
       </div>
       <div class="topo-item">
         <span class="topo-name">Telemetry</span>
-        <span class="topo-val">🦔 PostHog Analytics</span>
+        <span class="topo-val">PostHog Analytics</span>
       </div>
     </div>
 
@@ -526,7 +480,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <!-- Left Panel: Trigger Form -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">🚀 Dispatch Evaluation Run</div>
+          <div class="card-title">Dispatch Evaluation Run</div>
         </div>
         <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
           Trigger an on-demand regression check or adversarial red-teaming sweep against candidate LLM traces.
@@ -573,7 +527,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <!-- Right Panel: Live Execution Console -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">🖥️ Execution Console & Audit Feed</div>
+          <div class="card-title">Execution Console & Audit Feed</div>
           <span id="active-job-badge" style="font-size: 0.75rem; font-weight: 600; font-family: var(--font-mono);">IDLE</span>
         </div>
         <div class="console-box" id="console-output">Ready. Waiting for incoming GitHub Webhook or manual dispatch...</div>
@@ -583,7 +537,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <!-- Live Status Checker Card -->
     <div class="card">
       <div class="card-header">
-        <div class="card-title">📋 Inspect Job Status by ID</div>
+        <div class="card-title">Inspect Job Status by ID</div>
       </div>
       <div style="display: flex; gap: 1rem; align-items: center;">
         <input type="text" id="inspect-job-id" placeholder="Enter Job ID (e.g. manual-abc12345)" style="flex: 1;">
@@ -609,15 +563,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
-      const label = document.getElementById('theme-text');
-      const knob = document.getElementById('theme-knob');
-      if (theme === 'dark') {
-        label.innerText = 'Dark';
-        knob.innerText = '🌙';
-      } else {
-        label.innerText = 'Light';
-        knob.innerText = '☀️';
-      }
     }
 
     initTheme();

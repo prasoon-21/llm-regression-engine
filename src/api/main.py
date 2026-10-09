@@ -37,7 +37,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+from fastapi.responses import HTMLResponse
+from src.ui.dashboard import DASHBOARD_HTML
+
 app.include_router(webhook_router, prefix="/api/v1")
+
+
+@app.get("/", response_class=HTMLResponse, tags=["Dashboard"])
+async def dashboard_view():
+    """Interactive Web Dashboard for evaluations and monitoring."""
+    return HTMLResponse(content=DASHBOARD_HTML)
 
 
 class ManualTriggerRequest(BaseModel):

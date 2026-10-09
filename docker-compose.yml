@@ -1,0 +1,121 @@
+version: '3.8'
+
+networks:
+  llm-regression-net:
+    driver: bridge
+
+volumes:
+  redis_data:
+  pg_data:
+
+services:
+  # 1. API Gateway: Ingests GitHub Webhooks, validates HMAC signatures, pushes to Redis
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: llm-api-gateway
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - REDIS_URL=redis://task-broker:6379/0
+      - LITELLM_PROXY_URL=http://litellm-proxy:4000
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_APP_PRIVATE_KEY=${GITHUB_APP_PRIVATE_KEY}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regression_engine
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      task-broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - llm-regression-net
+
+  # 2. Task Broker & Transient State: Redis 7
+  task-broker:
+    image: redis:7-alpine
+    container_name: llm-task-broker
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - llm-regression-net
+
+  # 3. Unified Model Proxy: LiteLLM
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: llm-model-proxy
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-litellm-proxy-master-key}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--host", "0.0.0.0"]
+    networks:
+      - llm-regression-net
+
+  # 4. Evaluation Worker Engine: Python 3.11 + Node 20 (Promptfoo)
+  evaluation-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: llm-eval-worker
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://task-broker:6379/0
+      - LITELLM_PROXY_URL=http://litellm-proxy:4000
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-litellm-proxy-master-key}
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY}
+      - LANGSMITH_WORKSPACE_ID=${LANGSMITH_WORKSPACE_ID}
+      - LANGSMITH_ENDPOINT=${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regression_engine
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY}
+      - POSTHOG_HOST=${POSTHOG_HOST:-https://app.posthog.com}
+    depends_on:
+      task-broker:
+        condition: service_healthy
+      litellm-proxy:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    networks:
+      - llm-regression-net
+
+  # 5. Persistent Storage: PostgreSQL 16
+  postgres:
+    image: postgres:16-alpine
+    container_name: llm-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=regression_engine
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - llm-regression-net
